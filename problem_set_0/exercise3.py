@@ -18,8 +18,8 @@ with sqlite3.connect(db_file) as db:
         hist.set_ylabel('Number')
         plt.show()
 
-    # analyze('age', 100)
-    # analyze('weight', 100)
+    analyze('age', 100)
+    analyze('weight', 100)
 
     # Explore Relationships
     def scatter(col1, col2):
@@ -30,7 +30,7 @@ with sqlite3.connect(db_file) as db:
         plt.ylabel(col2)
         plt.show()
 
-    # scatter('age', 'weight')
+    scatter('age', 'weight')
 
     # Identify the outlier
     print(df[(df['weight']<30) & (df['age']>40)])

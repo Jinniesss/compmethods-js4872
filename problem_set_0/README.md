@@ -172,6 +172,269 @@ Process for identifying this outlier
   print(df[(df['weight']<30) & (df['age']>40)])
   ```
 
+#### Exercise 4: Hospital Data Analysis
 
+##### 4a. Data Loading and Basic Analysis
+
+Data source: Goldberger AL, Amaral LAN, Glass L, Hausdorff JM, Ivanov PCh, Mark RG, Mietus JE, Moody GB, Peng C-K, Stanley HE. PhysioBank, PhysioToolkit, and PhysioNet: Components of a New Research Resource for Complex Physiologic Signals. *Circulation* **101**(23):e215-e220 [Circulation Electronic Pages; http://circ.ahajournals.org/content/101/23/e215.full]; 2000 (June 13).
+
+Female is more common than male in `PATIENTS.csv`.
+
+There are 55 entries for female and 45 entries for male.
+
+Inputs:
+
+```python
+sum(patients['gender']=='F')
+sum(patients['gender']=='M')
+```
+
+Results:
+
+```python
+55
+45
+```
+
+##### 4c. Function Testing
+
+The funtion `get_subject_ids` first finds the icd9 code of the given diagnosis, then finds all subject ids with a record of the icd9 code.
+
+The testing function `func_test` finds all the diagnostic records with the found subject ids. Keep the entries with given diagnosis name and check if whether all subject ids still exist. This function ensures all subject ids have a record of the given diagnosis.
+
+Command:
+
+```python
+func_test("Intestinal infection due to Clostridium difficile")
+```
+
+Results:
+
+```python
+# Result of function get_subject_ids.
+[10043, 10045, 10094, 10102, 40595, 41976, 44228]
+
+# Found records with both the subject ids and the diagnosis name.
+      subject_id icd9_code                short_name                                          long_name
+186        10043     00845  Int inf clstrdium dfcile  Intestinal infection due to Clostridium difficile
+201        10045     00845  Int inf clstrdium dfcile  Intestinal infection due to Clostridium difficile
+436        10094     00845  Int inf clstrdium dfcile  Intestinal infection due to Clostridium difficile
+469        10102     00845  Int inf clstrdium dfcile  Intestinal infection due to Clostridium difficile
+814        40595     00845  Int inf clstrdium dfcile  Intestinal infection due to Clostridium difficile
+1166       41976     00845  Int inf clstrdium dfcile  Intestinal infection due to Clostridium difficile
+1753       44228     00845  Int inf clstrdium dfcile  Intestinal infection due to Clostridium difficile
+
+# Testing result
+All 7 subject_ids have the diagnosis Intestinal infection due to Clostridium difficile.
+```
+
+##### 4d. Age Calculation
+
+Results:
+
+```python
+    subject_id        dob        dod  age_days
+15       10043 2109-04-07 2191-02-07     29891
+17       10045 2061-03-25 2129-12-01     25087
+33       10094 1880-02-29 2180-03-20    109593
+36       10102 2035-04-13 2105-06-11     25626
+59       40595 2068-03-04 2144-10-31     27999
+66       41976 2136-07-28 2202-12-05     24235
+99       44228 2112-10-22 2171-04-14     21358
+```
+
+Findings:
+
++ There is an outlier subject (id: 10094) with an abnormal calculated age. This is probably resulted from the wrong dob information. 
++ The average age of patients diagnosed with Intestinal infection due to Clostridium difficile is around 25000 days.
+
+##### 4e. Discussion
+
+Compare these alternative structures with table-based data.
+
++ For dictionary (A), the diagnostic information (e.g. names) appears repetitively in nested dictionaries for different patients. Similarly, for dictionary (B), the patient information appears repetitively in nested dictionaries for different patients.
++ Table-based data can be indexed relatively flexibly, whereas indexing in dictionary structures should follow its hierarchy.
+
+Explain the strengths and weaknesses of these structures for different types of queries and analyses.
+
++ Using dictionary A makes it easy to query and analyze one subject, and dictionary B makes it easy to query and analyze one diagnosis. However, querying the other item is more complicated for each dictionary.
++ Querying nor analyzing table-based data is neither too complicated, but it usually requires multiple queries across different tables.
++ Table-based data can reduce redundant information, while dictionaries can consume more storage.
+
+Describe in words (no need to implement) how code might transform the data from the tabular form it stated out as into one of these hierarchical formats.
+
++ Transform tabular data to dictionary (A):
+
+  Merge `D_ICD_DIAGNOSES` and `DIAGNOSES_ICD` by column `icd9_code`, then merge this new table with `PATIENTS` by column `subject_id`. Group the final table by `subject_id`, then convert the grouped object to a dictionary. 
 
 ### Appendix: Code
+
+ [exercise1.py](exercise1.py) 
+
+```python
+def temp_tester(normal_temp):
+    def temp_checker(test_temp):
+        temp_diff = abs(normal_temp - test_temp)
+        if temp_diff <= 1:
+            # Healthy temperature range
+            return True
+        else:
+            return False
+    return temp_checker
+
+human_tester = temp_tester(37)
+chicken_tester = temp_tester(41.1)
+
+chicken_tester(42) # True -- i.e. not a fever for a chicken
+human_tester(42)   # False -- this would be a severe fever for a human
+chicken_tester(43) # False
+human_tester(35)   # False -- too low
+human_tester(98.6) # False -- normal in degrees F but our reference temp was in degrees C
+```
+
+ [exercise2.py](exercise2.py) 
+
+```python
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+import pandas as pd
+data = pd.read_csv("problem_set_0/us-states.csv")
+
+def new_cases(states):
+    """
+    Takes a list of state names and plots their new cases versus date using overlaid line graphs.
+    """
+    plt.figure()
+    for state in states:
+        state_data = data[data['state'] == state]
+        state_data = state_data.sort_values('date')
+        state_data['new_cases'] = state_data['cases'].diff().fillna(0)
+        plt.plot(state_data['date'], state_data['new_cases'], label=state, alpha=0.7)
+    plt.xlabel('Date')
+    plt.ylabel('New Cases')
+    plt.title('New COVID-19 Cases Over Time')
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=10)) 
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    # print(state_data[state_data['new_cases'] < 0])
+
+new_cases(['Florida'])
+
+def peak_case(state):
+    """
+    Takes the name of a state and returns the date of its highest number of new cases.
+    """
+    state_data = data[data['state'] == state]
+    peak_date = state_data.loc[state_data['cases'].diff().idxmax()]['date']
+    return peak_date
+
+peak_case('Florida')
+```
+
+ [exercise3.py](exercise3.py) 
+
+```python
+import pandas as pd
+import sqlite3
+import matplotlib.pyplot as plt
+
+db_file = 'pset0-population.db'
+
+with sqlite3.connect(db_file) as db:
+    df = pd.read_sql_query(f"SELECT * FROM population", db)
+    print(df.columns)
+    print(df.size)
+
+    def analyze(column, bins):
+        print(df[column].describe())
+        plt.figure()
+        hist = df[column].hist(bins=bins)
+        hist.set_title(f'{column} Distribution')
+        hist.set_xlabel(column)
+        hist.set_ylabel('Number')
+        plt.show()
+
+    analyze('age', 100)
+    analyze('weight', 100)
+
+    # Explore Relationships
+    def scatter(col1, col2):
+        plt.figure()
+        plt.scatter(df[col1], df[col2], alpha=0.5)
+        plt.title(f'{col1} vs {col2}')
+        plt.xlabel(col1)
+        plt.ylabel(col2)
+        plt.show()
+
+    scatter('age', 'weight')
+
+    # Identify the outlier
+    print(df[(df['weight']<30) & (df['age']>40)])
+
+```
+
+ [exercise4.py](exercise4.py) 
+
+```python
+import pandas as pd
+
+d_icd_diag = pd.read_csv('problem_set_0/D_ICD_DIAGNOSES.csv') # diag & diag_id
+diag_icd = pd.read_csv('problem_set_0/DIAGNOSES_ICD.csv') # patient_id & diag_id
+patients = pd.read_csv('problem_set_0/PATIENTS.csv') # patient_id & info
+
+## 4a
+print(sum(patients['gender']=='F'))
+print(sum(patients['gender']=='M'))
+
+## 4b
+def get_subject_ids(diagnosis: str) -> list:
+    diag_icd9 = d_icd_diag[(d_icd_diag['short_title']==diagnosis)|(d_icd_diag['long_title']==diagnosis)]['icd9_code'].iloc[0]
+    sub_ids = diag_icd[diag_icd['icd9_code']==diag_icd9]['subject_id'].to_list()
+    print(sub_ids)
+    return sub_ids
+
+get_subject_ids("Intestinal infection due to Clostridium difficile")
+
+## 4c Function testing
+
+def func_test(diagnosis: str):
+    sub_ids = get_subject_ids(diagnosis)
+    # 1. Check if all found subject_ids have the right diagnosis.
+    sub_diag = diag_icd[diag_icd['subject_id'].isin(sub_ids)][['subject_id','icd9_code']]
+    sub_diag['short_name'] = sub_diag['icd9_code'].map(d_icd_diag.set_index('icd9_code')['short_title'])
+    sub_diag['long_name'] = sub_diag['icd9_code'].map(d_icd_diag.set_index('icd9_code')['long_title']) 
+    sub_diag = sub_diag[(sub_diag['short_name']==diagnosis)|(sub_diag['long_name']==diagnosis)]
+    print(sub_diag)
+    for id in sub_ids:
+        if id not in sub_diag['subject_id'].to_list():
+            print(f"Error: subject_id {id} not found in diag_icd")
+            return False
+    print(f"All {len(sub_ids)} subject_ids have the diagnosis {diagnosis}.")
+    return True
+
+func_test("Intestinal infection due to Clostridium difficile")
+
+## 4d. Age Calculation
+def calculate_age(diagnosis: str):
+    sub_ids = get_subject_ids(diagnosis)
+    subjects = patients[patients['subject_id'].isin(sub_ids)][['subject_id','dob','dod']]
+    subjects['dob'] = pd.to_datetime(subjects['dob'])
+    subjects['dod'] = pd.to_datetime(subjects['dod'])
+    
+    # Set dob and dod to_pydatetime() and then calculate age in days
+    ages = []
+    for i in range(len(subjects)):
+        sub = subjects.iloc[i]
+        age = sub['dod'].to_pydatetime() - sub['dob'].to_pydatetime()
+        ages.append(age.days)
+    subjects['age_days'] = ages
+    print(subjects)
+    return subjects
+    
+calculate_age("Intestinal infection due to Clostridium difficile")
+
+```
+
