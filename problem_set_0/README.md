@@ -8,7 +8,7 @@ NetID: js4872
 
 ### Instructions for Running Scripts
 
-This project's scripts are written in Python and can be run from the command line.
+This project's scripts are written in Python.
 
 ### Exercise Answers & Results
 
