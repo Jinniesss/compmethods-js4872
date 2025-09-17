@@ -216,3 +216,73 @@ Output:
 (324357, 158992) (324357, 158992)
 (49752, 24869) (49752, 24869)
 ```
+
+### Exercise 2: Low-level standards and their implications
+
+##### 2a. Understanding the function
+
++ What does it appear that they are trying to do? What's the relationship between tstop, delta_t, and the number of doses administered?
+
+  They are trying to administer a dose at fixed time intervals until a stopping point is reached. 
+
+  The number of doses administered = ceil( `tstop` / `delta-_t`)
+
+##### 2b. A first test case
+
+Administering meds at t=0
+Administering meds at t=0.25
+Administering meds at t=0.5
+Administering meds at t=0.75
+
+##### 2c. A second test case
+
+Administering meds at t=0
+Administering meds at t=0.1
+Administering meds at t=0.2
+Administering meds at t=0.30000000000000004
+Administering meds at t=0.4
+Administering meds at t=0.5
+Administering meds at t=0.6
+Administering meds at t=0.7
+Administering meds at t=0.7999999999999999
+Administering meds at t=0.8999999999999999
+Administering meds at t=0.9999999999999999
+
+##### 2d. Interpreting the surprises
+
+In the second case, several times are not exactly like expected, e.g. the time of the fourth dose is expected to be 0.3 instead of 0.30000000000000004. The number of doses is also one more than expected. This is due to the storing method of float numbers in python.
+
+##### 2e. Clinical implications
+
+For the value of every time, the change is small in magnitude and the value is close to the true one. However, it causes a significant change in number of doses, which may result in serious medical issues. The error in the number itself is tiny, but looking at the whole, this error can cause the program to make a wrong decision. 
+
+##### 2f. A safer implementation
+
+```python
+# -----2f. A safer implementation-----
+def administer_meds_rev(delta_t, tstop):
+    num = int(tstop / delta_t)
+    t = 0
+    for _ in range(num): 
+        print(f"Administering meds at t={t:.4f}")
+        t += delta_t
+
+administer_meds_rev(0.1, 1)
+```
+
+Output:
+
+```python
+Administering meds at t=0.0000
+Administering meds at t=0.1000
+Administering meds at t=0.2000
+Administering meds at t=0.3000
+Administering meds at t=0.4000
+Administering meds at t=0.5000
+Administering meds at t=0.6000
+Administering meds at t=0.7000
+Administering meds at t=0.8000
+Administering meds at t=0.9000
+```
+
+The revised function calculates the number of doses first, ensuring its correctness. The output is also formatted to four decimal places, in this case making the numbers true to the expected values.
