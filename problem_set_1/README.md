@@ -289,7 +289,7 @@ Administering meds at t=0.9000
 
 The revised function calculates the number of doses first, ensuring its correctness. The output is also formatted to four decimal places, in this case making the numbers true to the expected values.
 
-### **Exercise 3: Algorithm Analysis and Performance Measurement**
+### Exercise 3: Algorithm Analysis and Performance Measurement
 
 ##### 3a. Hypothesize the Operation
 
@@ -358,4 +358,111 @@ Big-O for each algorithm
 + Recommend which algorithm would be preferable for different types of data and justify your recommendation based on your findings. (2 points)
 
   If we priorly know the data is sorted, `alg1` is a good option to check the order, with a lowest time cost of $O(n)$. Otherwise, when we do not have a confident knowledge about the order, `alg2` is better with its consistently good performance. For `alg1`, the existence of only one unsorted item at the end of a list can result in a huge increase in time cost ($O(n)$ to $O(n^2)$). While the performance of `alg2` is  independent from the data  with an efficient time complexity of $O(n\log n)$.
+
+### Exercise 4: Implementing and Analyzing a Binary Search Tree as a tool for organizing data
+
+##### 4a. & 4b.
+
+```python
+class Tree:
+    def __init__(self):
+        self._value = None
+        self._data = None
+        self.left = None
+        self.right = None
+    def add(self,value, data):
+        if self._value is None:
+            self._value = value
+            self._data = data
+        elif value < self._value:
+            if self.left is None:
+                self.left = Tree()
+            self.left.add(value, data)
+        else:
+            if self.right is None:
+                self.right = Tree()
+            self.right.add(value, data)
+
+    def __contains__(self, patient_id):
+        if self._value == patient_id:
+            return True
+        elif self.left and patient_id < self._value:
+            return patient_id in self.left
+        elif self.right and patient_id > self._value:
+            return patient_id in self.right
+        else:
+            return False
+```
+
+Test:
+
+```python
+my_tree = Tree()
+for patient_id, initials in [(24601, "JV"), (42, "DA"), (7, "JB"), (143, "FR"), (8675309, "JNY")]:
+    my_tree.add(patient_id, initials)
+
+print(24601 in my_tree)
+print(1492 in my_tree)
+```
+
+Output:
+
+```python
+True
+False
+```
+
+##### 4c. Implement and Test a `has_data` Method
+
+```python
+def has_data(self, data):
+        if self._data == data:
+            return True
+        elif self.left and self.left.has_data(data):
+            return True
+        elif self.right and self.right.has_data(data):
+            return True
+        else:
+            return False
+```
+
+Test:
+
+```python
+print(my_tree.has_data("JV"))
+print(my_tree.has_data(24601))
+```
+
+Output:
+
+```python
+True
+False
+```
+
+##### 4d. Performance Analysis of `__contains__` and `has_data`
+
++ Timing two methods:
+
+  7 different numbers of nodes are used to plot each timing:
+
+  ![tree_performance](figures/tree_performance.png)
+
+  The graph shows that the time required for checking if a number is in the tree approaches $O(\log N)$ as $n$ increases.
+
+   `__contains__` is faster than `has_data`. It is because the tree is sorted by IDs (`self._value`), and more branches of the tree can be skipped while using `__contains__` to search for an ID. Whereas in `has_data`, every node should be looked into until the right one is found. 
+
++ Setup time analysis
+
+  ![tree_setup_performance](figures/tree_setup_performance.png)
+
+##### 4e. Discussing Choice of Test Data
+
++ Explain why it is unrepresentative to always use a specific value (e.g., patient_id = 1) as test data or to only use one test point for performance analysis. Discuss the implications of choosing appropriate test data for accurately assessing performance.
+
+  The performance of a searching algorithm can be highly dependent on the location of the chosen test data. If the specific node is very close to (or very far away from) the root of the tree, we will underestimate (or overestimate) the time cost of a tree searching algorithm if we only choose the specific value for testing. We need multiple test data to see the average performance of an algorithm.
+
+  Therefore, we should pick multiple random test data for a more accurate assessment.
+
+#### Exercise 5: Choosing ontologies for clinical research data
 
