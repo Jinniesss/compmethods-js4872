@@ -36,7 +36,9 @@ This project's scripts are written in Python.
 
 + *Extra Credit:* (2 points) Explain how the existence (or non-existence) of multiple patients with the same age affects the solution to the rest of the problem.
 
-  【tbc】
+  The non-existence of multiple patients with the same age can prevent the ambiguity in the sorting order. 
+
+  If there exist multiple patients with the same age, the number of patients in certain age range might be wrong. In binary search, when the `mid` lands in the middle of a specific age, the patients before/after the `mid` with the exact age might be ignored unexpectedly. Additionally, the meaning of the 'eldest' and the 'second eldest' becomes ambiguous, as their might be multiple patients with a same eldest age.
 
 ##### 1b. Plot Gender Distribution
 
@@ -286,3 +288,74 @@ Administering meds at t=0.9000
 ```
 
 The revised function calculates the number of doses first, ensuring its correctness. The output is also formatted to four decimal places, in this case making the numbers true to the expected values.
+
+### **Exercise 3: Algorithm Analysis and Performance Measurement**
+
+##### 3a. Hypothesize the Operation
+
+Test cases:
+
+```python
+# -----3a. Hypothesize the Operation-----
+n = 5
+print(data1(n),alg1(data1(n)))
+print(data2(n),alg1(data2(n)))
+print(data3(n),alg1(data3(n)))
+print(random.sample(range(n), n),alg1(random.sample(range(n), n)))
+print(random.sample(range(n), n),alg2(random.sample(range(n), n)))
+```
+
+Output:
+
+```python
+[31.0, 31.026, 31.07515666666667, 31.1456131764, 31.236317170692352] [31.0, 31.026, 31.07515666666667, 31.1456131764, 31.236317170692352]
+[0, 1, 2, 3, 4] [0, 1, 2, 3, 4]
+[5, 4, 3, 2, 1] [1, 2, 3, 4, 5]
+[4, 0, 3, 1, 2] [0, 1, 2, 3, 4]
+[2, 1, 4, 0, 3] [0, 1, 2, 3, 4]
+```
+
+Hypothesis: `alg1` and `alg2` sort a list of numbers in ascending order. 
+
+##### 3b. Explain the algorithms
+
+`alg1`
+
++ Go through every pair of adjacent items in the list, swap the two items if the former is larger than the latter. Repeat the process until there is no swap in a single iteration. Then the sorting is completed. 
+
+`alg2`
+
++ Split a list in the middle into two sublists. Sort each sublist through the same method. Merge the two sorted sublists by iteratively taking the smaller of the top (smallest) items of two sublists. 
+
+##### 3c. Performance Measurement and Analysis
+
+![alg_performance](figures/alg_performance.png)
+
+Big-O for each algorithm 
+
++ `alg1`
+
+  $O(n^2)$
+
+  In the worst case, all pairs would be compared once, which is ${n(n-1)\over2}$ times. 
+
++ `alg2`
+
+  $O(n\log n)$
+
+  There would be $\log n$ divisions, for each of which the merging cost at most $n$. 
+
+![alg_performance_data2](figures/alg_performance_data2.png)
+
+![alg_performance_data3](figures/alg_performance_data3.png)
+
+##### 3d. Conclusions and recommendations
+
++ Discuss how the performance scales across the three data sets.
+
+  The performance of `alg2` is remarkably consistent across three datasets, while that of `alg1` is sensitive to datasets. `alg1` demonstrates best performance on `data2`, average performance on `data1`, and worst on `data3`. 
+
++ Recommend which algorithm would be preferable for different types of data and justify your recommendation based on your findings. (2 points)
+
+  If we priorly know the data is sorted, `alg1` is a good option to check the order, with a lowest time cost of $O(n)$. Otherwise, when we do not have a confident knowledge about the order, `alg2` is better with its consistently good performance. For `alg1`, the existence of only one unsorted item at the end of a list can result in a huge increase in time cost ($O(n)$ to $O(n^2)$). While the performance of `alg2` is  independent from the data  with an efficient time complexity of $O(n\log n)$.
+
