@@ -466,3 +466,50 @@ False
 
 #### Exercise 5: Choosing ontologies for clinical research data
 
+##### 5a. Recommended ontology set
+
+Ontologies
+
+1. National Cancer Institute Thesaurus (NCIT)
+
+   Data types: Gene sequences, medications, notes.
+
+   NCIT is a massive and comprehensive biomedical ontology. While its primary focus is on cancer, it has evolved into a broad, comprehensive ontology covering thousands of concepts related to diseases, drugs, anatomy, genes, proteins, and biological processes.
+
+2. Systematized Nomenclature of Medicine -- Clinical Terms (SNOMED CT)
+
+   Data types: Imaging, medications, notes.
+
+   SNOMED CT covers the vast landscape of general medicine, from symptoms and diagnoses to procedures and findings. It can link a diagnosis in a clinical note, a procedure, a medication, and an imaging finding under a single, unified coding system.
+
+##### 5b. Licensing and alternatives
+
+1. NCIT
+
+   The NCI Thesaurus™ is released under the Creative Commons Attribution 4.0 International license (CC BY 4.0). (https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/ThesaurusTermsofUse.htm)
+
+   This license grants broad freedoms to use the material for almost any purpose, including commercially. Users must give appropriate credit to the creator.
+
+2. SNOMED CT
+
+   SNOMED CT is a proprietary terminology. If you are using and/or deploying SNOMED CT in a non-Member country/territory, you are required to apply for a license on an annual basis. (https://www.snomed.org/licensing)
+
+   Use is free within member countries (like the United States, UK, Canada, Australia, etc.) for their healthcare systems. However, using it in a non-member country can cost significant fees. 
+
+   An **alternative** is LOINC, which is 'made available at no cost worldwide under the license at http://loinc.org/license.' 
+
+   **Why it's acceptable:** LOINC provides a set of universal names and ID codes for identifying laboratory and clinical test results. It provides exceptional coverage and specificity for coding lab tests, vital signs, and measurements, which constitute a huge portion of a patient's record.
+
+   **Why SNOMED CT is still better:** SNOMED CT's scope is broader, while LOINC is more specialized in lab results. SNOMED CT is more suitable in this context.
+
+   **Discovery/Maintenance Tradeoffs:** SNOMED CT's licensing model funds a dedicated international organization to ensure high-quality, consistent updates, tools and support. The tradeoff for the maintenance is the access restriction. 
+
+##### 5c. Search methodology and stopping rule
+
+I list some example keywords regarding gene sequences, imaging, medications, and notes respectively. Then choose 'keywords' as input, 'ontology sets' as output, and submit the text to the BioPortal Ontology Recommender:
+
+![image-20250921223422968](assets/image-20250921223422968.png)
+
+The result shows that the combination of two ontologies, NCIT and SNOMED CT, provides high scores for both coverage and detail. While certain three-ontology sets achieved higher scores, the performance difference was not significant. Therefore, the pairing of NCIT and SNOMED CT offers a comprehensive and non-redundant framework without introducing unnecessary complexity.
+
+![image-20250921223751119](assets/image-20250921223751119.png)
