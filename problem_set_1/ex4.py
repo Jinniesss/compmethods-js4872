@@ -42,18 +42,19 @@ class Tree:
         
 
 # -----4a. Implement the add Method-----
-# my_tree = Tree()
-# for patient_id, initials in [(24601, "JV"), (42, "DA"), (7, "JB"), (143, "FR"), (8675309, "JNY")]:
-#     my_tree.add(patient_id, initials)
-# # print(my_tree.left._value)
+my_tree = Tree()
+for patient_id, initials in [(24601, "JV"), (42, "DA"), (7, "JB"), 
+                             (143, "FR"), (8675309, "JNY")]:
+    my_tree.add(patient_id, initials)
+print(my_tree.left._value)
 
-# # -----4b. Implement a __contains__ Method-----
-# print(24601 in my_tree)
-# print(1492 in my_tree)
+# -----4b. Implement a __contains__ Method-----
+print(24601 in my_tree)
+print(1492 in my_tree)
 
-# # -----4c. Implement and Test a has_data Method-----
-# print(my_tree.has_data("JV"))
-# print(my_tree.has_data(24601))
+# -----4c. Implement and Test a has_data Method-----
+print(my_tree.has_data("JV"))
+print(my_tree.has_data(24601))
 
 # -----4d. Performance Analysis of __contains__ and has_data-----
 n_values = np.logspace(1, 4, num=7, dtype=int)

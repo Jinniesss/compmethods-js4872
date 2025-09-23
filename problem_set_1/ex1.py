@@ -92,7 +92,7 @@ def count_above_age(patients, target_age):
 count_above_41d5 = count_above_age(patients_sorted_by_age, 41.5)
 print(f"Number of patients older than 41.5: {count_above_41d5}")
 # validate with a linear scan
-# print(len([age for age in ages if age > 41.5]))
+print(len([age for age in ages if age > 41.5]))
 
 # -----1g. Function for Age Range Query-----
 def count_in_age_range(patients, low_age, high_age):
