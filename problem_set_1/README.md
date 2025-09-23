@@ -97,7 +97,8 @@ def binary_search(patients, target_age):
     return None
 
 patient_41d5 = binary_search(patients_sorted_by_age, 41.5)
-print(f"Patient aged 41.5: {patient_41d5.get('name')}, Age {patient_41d5.get('age')}, Gender {patient_41d5.get('gender')}")
+print(f"Patient aged 41.5: {patient_41d5.get('name')}, 
+      Age {patient_41d5.get('age')}, Gender {patient_41d5.get('gender')}")
 ```
 
 Output:
@@ -186,7 +187,8 @@ def count_in_age_range(patients, low_age, high_age):
 
 # validation
 print(count_in_age_range(patients_sorted_by_age, 0, 100), len(ages))
-print(count_in_age_range(patients_sorted_by_age, 30, 41.5), len([age for age in ages if 30 <= age < 41.5]))
+print(count_in_age_range(patients_sorted_by_age, 30, 41.5), 
+      len([age for age in ages if 30 <= age < 41.5]))
 ```
 
 Output:
@@ -210,8 +212,13 @@ def count_male_in_age_range(patients, low_age, high_age):
     return count, count_male
 
 # validation
-print(count_male_in_age_range(patients_sorted_by_age, 0, 100), (len(ages), len([p for p in patients if p.get('gender') == 'male' and 0 <= float(p.get('age')) < 100])))
-print(count_male_in_age_range(patients_sorted_by_age, 30, 41.5), (len([age for age in ages if 30 <= age < 41.5]), len([p for p in patients if p.get('gender') == 'male' and 30 <= float(p.get('age')) < 41.5])))
+print(count_male_in_age_range(patients_sorted_by_age, 0, 100), (len(ages), 
+      len([p for p in patients if p.get('gender') == 'male' 
+           and 0 <= float(p.get('age')) < 100])))
+print(count_male_in_age_range(patients_sorted_by_age, 30, 41.5), 
+      (len([age for age in ages if 30 <= age < 41.5]), 
+       len([p for p in patients if p.get('gender') == 'male' 
+            and 30 <= float(p.get('age')) < 41.5])))
 ```
 
 Output:
@@ -316,7 +323,8 @@ print(random.sample(range(n), n),alg2(random.sample(range(n), n)))
 Output:
 
 ```python
-[31.0, 31.026, 31.07515666666667, 31.1456131764, 31.236317170692352] [31.0, 31.026, 31.07515666666667, 31.1456131764, 31.236317170692352]
+[31.0, 31.026, 31.07515666666667, 31.1456131764, 31.236317170692352]
+[31.0, 31.026, 31.07515666666667, 31.1456131764, 31.236317170692352]
 [0, 1, 2, 3, 4] [0, 1, 2, 3, 4]
 [5, 4, 3, 2, 1] [1, 2, 3, 4, 5]
 [4, 0, 3, 1, 2] [0, 1, 2, 3, 4]
@@ -406,7 +414,8 @@ Test:
 
 ```python
 my_tree = Tree()
-for patient_id, initials in [(24601, "JV"), (42, "DA"), (7, "JB"), (143, "FR"), (8675309, "JNY")]:
+for patient_id, initials in [(24601, "JV"), (42, "DA"), 
+                             (7, "JB"), (143, "FR"), (8675309, "JNY")]:
     my_tree.add(patient_id, initials)
 
 print(24601 in my_tree)
@@ -574,7 +583,8 @@ plt.savefig('problem_set_1/figures/gender_distribution.png')
 # -----1c. Sort Patients by Age-----
 patients_sorted_by_age = sorted(patients, key=lambda x: float(x.get('age')))
 eldest = patients_sorted_by_age[-1]
-print(f"Eldest patient: {eldest.get('name')}, Age {eldest.get('age')}, Gender {eldest.get('gender')}")
+print(f"Eldest patient: {eldest.get('name')}, 
+      Age {eldest.get('age')}, Gender {eldest.get('gender')}")
 
 # ----- 1e. Binary Search for Specific Age-----
 def binary_search(patients, target_age):
@@ -595,7 +605,8 @@ def binary_search(patients, target_age):
     return None
 
 patient_41d5 = binary_search(patients_sorted_by_age, 41.5)
-print(f"Patient aged 41.5: {patient_41d5.get('name')}, Age {patient_41d5.get('age')}, Gender {patient_41d5.get('gender')}")
+print(f"Patient aged 41.5: {patient_41d5.get('name')}, 
+      Age {patient_41d5.get('age')}, Gender {patient_41d5.get('gender')}")
 
 # -----1f. Count Patients Above a Certain Age-----
 def count_above_age(patients, target_age):
@@ -662,7 +673,8 @@ def count_in_age_range(patients, low_age, high_age):
 
 # validation
 print(count_in_age_range(patients_sorted_by_age, 0, 100), len(ages))
-print(count_in_age_range(patients_sorted_by_age, 30, 41.5), len([age for age in ages if 30 <= age < 41.5]))
+print(count_in_age_range(patients_sorted_by_age, 30, 41.5), 
+      len([age for age in ages if 30 <= age < 41.5]))
 
 # -----1h. Function for Age and Gender Range Query-----
 def count_male_in_age_range(patients, low_age, high_age):
@@ -675,8 +687,13 @@ def count_male_in_age_range(patients, low_age, high_age):
     return count, count_male
 
 # validation
-print(count_male_in_age_range(patients_sorted_by_age, 0, 100), (len(ages), len([p for p in patients if p.get('gender') == 'male' and 0 <= float(p.get('age')) < 100])))
-print(count_male_in_age_range(patients_sorted_by_age, 30, 41.5), (len([age for age in ages if 30 <= age < 41.5]), len([p for p in patients if p.get('gender') == 'male' and 30 <= float(p.get('age')) < 41.5])))
+print(count_male_in_age_range(patients_sorted_by_age, 0, 100), 
+      (len(ages), len([p for p in patients if p.get('gender') == 'male' 
+                       and 0 <= float(p.get('age')) < 100])))
+print(count_male_in_age_range(patients_sorted_by_age, 30, 41.5), 
+      (len([age for age in ages if 30 <= age < 41.5]), 
+       len([p for p in patients if p.get('gender') == 'male' 
+            and 30 <= float(p.get('age')) < 41.5])))
 ```
 
  [ex2.py](ex2.py) 
