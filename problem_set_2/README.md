@@ -305,3 +305,9 @@ It is quite promising that this parallel algorithm can reach 2x speedup with mor
 *Every execution time in the result is the shortest of 5 repeated runs. 
 
 #### Exercise 3: Estimating the Number of Distinct 15-mers in Chromosome 1 using Hash Functions
+
+##### 3a. Parsing and k-mer generation
+
+
+
+##### 3b. Implementing a hash family
