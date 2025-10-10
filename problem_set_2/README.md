@@ -308,6 +308,238 @@ It is quite promising that this parallel algorithm can reach 2x speedup with mor
 
 ##### 3a. Parsing and k-mer generation
 
+Write code to parse the FASTA file and extract all overlapping 15-mers from chromosome 1. 
 
++ ```python
+  # -----3a. Parsing and k-mer generation-----
+  with open("problem_set_2/data/human_g1k_v37.fasta", "r") as handle:
+      for record in SeqIO.parse(handle, "fasta"):
+          sequence_chr1 = record.seq
+          break
+  
+  sequence_chr1 = str(sequence_chr1)
+  len_seq = len(sequence_chr1)
+  kmer_set = set()
+  k = 15
+  
+  # Add all kmers to a set
+  cur_kmer = sequence_chr1[:k]
+  kmer_set.add(cur_kmer)
+  for i in tqdm(range(k, len_seq), desc='Adding kmers...'):
+      cur_kmer = cur_kmer[1:] + sequence_chr1[i]
+      kmer_set.add(cur_kmer)
+  
+  # Exclude any 15-mer that contains more than two Ns
+  kmer2discard = []
+  for kmer in tqdm(kmer_set, desc='Cleaning kmers...'):
+      if kmer.count('N') > 2:
+          kmer2discard.append(kmer)
+  print(f'{len(kmer2discard)} kmers discarded.')
+  for kmer in kmer2discard:
+      kmer_set.discard(kmer)
+  
+  print(f'Length of Chromosome 1: {len_seq}')
+  print(f'Number of valid 15-mers: {len(kmer_set)}')
+  ```
+
++ How many nucleotides are in Chromosome 1?
+
+  ```python
+  >>> print(f'Length of Chromosome 1: {len_seq}')
+  Length of Chromosome 1: 249250621
+  ```
+
++ Count how many valid 15-mers you generate (i.e., those that aren't excluded). 
+
+  ```python
+  >>> print(f'Number of valid 15-mers: {len(kmer_set)}')
+  Number of valid 15-mers: 136904114
+  ```
 
 ##### 3b. Implementing a hash family
+
+```python
+def hash_func(a, encoded_sequence, k):
+    hash = 0
+    num_N = encoded_sequence[:k].count(5)
+    min_hash = M
+    for i in range(k):
+        hash = (hash * a + encoded_sequence[i]) % M
+    if num_N <= 2:
+        min_hash = hash
+    a_pow = pow(a, k-1, M)
+    for i in range(len(encoded_sequence)-k):
+        next_digit = encoded_sequence[i+k]
+        first_digit = encoded_sequence[i]
+        
+        term_to_remove = (a_pow * first_digit) % M
+        hash = ((hash - term_to_remove + M) * a + next_digit) % M
+        if next_digit == 5:
+            num_N += 1
+        if first_digit == 5:
+            num_N -= 1
+        if num_N > 2:
+            continue
+        
+        min_hash = min(min_hash, hash)
+    return min_hash / M
+```
+
+##### 3c. Estimating distinct counts
+
+```python
+num_a_list = [1, 2, 5, 10, 100]
+min_hash_list = []
+a_min = int((M/6)**(1/14))
+a_min += (a_min+1)%2
+
+for num_a in tqdm(num_a_list, desc='Estimating distinct kmers...'):
+    a_list = [random.randrange(a_min, M, 2) for _ in range(num_a)]    
+    sum_hash = 0
+    cur_min_hash = []
+    # for a in a_list:
+    #     cur_min_hash.append(hash_func(a, encoded_sequence, k))
+    
+    # Use parallel processing to speed up
+    cur_min_hash = Parallel(n_jobs=-1)(
+    delayed(hash_func)(a, encoded_sequence, k) for a in a_list)
+    
+    min_hash_list.append(cur_min_hash)
+    
+for i, num_a in tqdm(enumerate(num_a_list), desc='Plotting...'):
+    # Scatter plot for all hash values
+    a_vals = [num_a] * len(min_hash_list[i])
+    est_vals = [1/h - 1 for h in min_hash_list[i]]
+    plt.scatter(a_vals, est_vals, alpha=0.2, label=f'{num_a} hashes')
+    
+    # Calculate and store mean
+    if est_vals:
+        mean_est = 1/(sum(min_hash_list[i]) / len(est_vals)) - 1
+        mean_est_nums.append(mean_est)
+```
+
+##### 3d. Evaluation and analysis
+
++ Plot the estimated distinct count against the true number of distinct 15-mers for varying numbers of hash functions.
+
+  ![estimated_values_vs_num_hashes](figures/estimated_values_vs_num_hashes.png)
+
+  *Another trial on a shorter sequence with more hash functions:
+
+  ![1000seq](figures/1000seq.png)
+
++ Discuss how the estimate improves as more hash functions are combined.
+
+  The estimate approaches the actual number of kmers as more hash functions are combined. 
+
++ How stable are the estimates? What happens if you only use a single hash?
+
+  The estimates are more stable (with smaller sampling variance) as the number of hash functions gets larger. 
+
+  If only a single hash is used, the results of different trials vary a lot and are usually not close to the actual value. 
+
+##### 3e. Justification of design choices
+
++ How you selected values for $a$:
+
+  1. $a$ should be an odd integer less than $M$. 
+
+  2. $a$ should be large enough so that the hash values can cover the whole array of size $M$. Otherwise, the normalized hash values (by dividing by $M$) would be overall small, and the estimated number of distinct kmers would be larger than the actual number. 
+
+     Therefore, $5(a^{14}+a^{13}+...+a+1)>2e{61}-1$.
+
+     Safely, take $6a^{14}>2e{61}-1$. 
+
+     $a$ should be larger than `((2e61-1)/6)**(1/14)`.
+
+     (Though this criterion does not matter a lot when $M$ and/or the number hash functions is large is large.)
+
++ Any optimizations you made (e.g., rolling updates, pre-encoding).
+
+  1. Rolling updates
+
+     ```python
+     for i in range(len(encoded_sequence)-k):
+         next_digit = encoded_sequence[i+k]
+         first_digit = encoded_sequence[i]
+     
+         term_to_remove = (a_pow * first_digit) % M
+         hash = ((hash - term_to_remove + M) * a + next_digit) % M
+     ```
+
+     The time complexity of every hash update is $O(1)$.
+
+  2. Removal of head and tail 'N's
+
+     ```python
+     # Remove leading and trailing Ns, and keep up to 2 Ns at each end
+     head_N_num = tail_N_num = 0
+     for i in range(len(sequence_chr1)):
+         if sequence_chr1[i] == 'N':
+             head_N_num += 1
+         else:
+             break
+     for i in range(len(sequence_chr1)-1, 0, -1):
+         if sequence_chr1[i] == 'N':
+             tail_N_num += 1
+         else:
+             break
+     sequence_chr1 = sequence_chr1[head_N_num-2:len(sequence_chr1)-tail_N_num+2]
+     print(f'Head Ns: {head_N_num}, Tail Ns: {tail_N_num}')
+     ```
+
+     In this case, 10000 'N's at the beginning and 10000 'N's at the end of the sequence are removed before hashing. The goal is to speed up the algorithm.
+
+  3. Pre-encoding
+
+     ```python
+     c = {'A':1, 'C':2, 'G':3, 'T':4, 'N':5}
+     encoded_sequence = [c.get(char, 5) for char in sequence_chr1]
+     ```
+
+     The sequence is pre-processed into a list of integers before hashing.
+
+  4. Parallel processing
+
+     ```python
+     # for a in a_list:
+     #     cur_min_hash.append(hash_func(a, encoded_sequence, k))
+         
+     # Use parallel processing to speed up
+     cur_min_hash = Parallel(n_jobs=-1)(
+     delayed(hash_func)(a, encoded_sequence, k) for a in a_list)
+     ```
+
+     During hashing with different `a`s, `Parallel` package is used for parallel processing, which significantly shortens the execution time.
+
+#### Exercise 4: Thinking about health and the Internet
+
+##### 4A: Research and Analysis
+
+A central part of health informatics involves moving health resources online to enhance efficiency, data collection, and patient access. This digital transformation also comes with some major challenges that we have to take seriously, including bridging the digital divide to ensure equitable access, validating the clinical efficacy of telehealth interventions, and combating the threat of medical misinformation.
+
+**The digital divide.** Not everyone seeks professional medical help when they are having health issues, and even fewer use online healthcare resources.. A study on the socioeconomic demographics of U.S. patients during the COVID-19 pandemic surge shows that vulnerable populations -- including older adults, those with lower household incomes, and the uninsured -- were less likely to engage with telehealth or virtual visits [^1]. This digital divide is even more pronounced in low- and middle-income countries, where many essential resources are inaccessible [^2]. This creates a significant imbalance, as large populations with potentially great medical needs are left without access to care, which is a complex problem that touches upon many societal issues. 
+
+**Efficacy of online healthcare** is another major concern. For instance, a study in Brazil found **no** significant changes in the diabetic patients' HbA1c levels after four months of telehealth intervention[^3]. The convenience of the internet is meaningless if it doesn't bring actual health benefits to patients. Therefore, people have to prioritize and rigorously evaluate the efficacy of any digital health resource, especially when it is intended to replace the traditional care. 
+
+**Misinformation.** As more digital health care approaches appear, people turn to the internet for medical advice. However, a significant portion of the information they find is uncertified and misleading. The proportion of health-related misinformation on social media ranged from 0.2% to 28.8%[^4]. Misleading health content can be extremely dangerous, as it can lead people to delay proven medical care, ingest harmful substances, or develop 'cyberchondri'. Regulations are needed for health-related content on social media and in search engine results. Some platforms have already begun adding warning labels to potentially misleading content, which is a positive step. Further efforts should be made to help people distinguish between reliable and unreliable health information. Credible information should be amplified, as online platforms could also be a useful tool to combat misinformation during crises.
+
+Moving healthcare online creates as many challenges as it solves. The field of health informatics can't just focus on building new tools. It must also solve these complex real-world problems, aiming to deliver better health care to everyone. 
+
+[^1]: Darrat I, Tam S, Boulis M, Williams AM. Socioeconomic Disparities in Patient Use of Telehealth During the Coronavirus Disease 2019 Surge. *JAMA Otolaryngol Head Neck Surg.* 2021;147(3):287–295. doi:10.1001/jamaoto.2020.5161
+[^2]: Tiwari, Biplav Babu, Aneesh Kulkarni, Hui Zhang, Mahmud M. Khan, and Donglan Stacy Zhang. 2023. “Utilization of Telehealth Services in Low- and Middle-Income Countries amid the COVID-19 Pandemic: A Narrative Summary.” *Global Health Action* 16 (1). doi:10.1080/16549716.2023.2179163.
+[^3]: Franco, Debora Wilke, Janine Alessi, Taíse Rosa de Carvalho, Gabriel Luiz Kobe, Giovana Berger Oliveira, Carolina Padilla Knijnik, Bibiana Amaral*, et al.* "The Impact of a Telehealth Intervention on the Metabolic Profile of Diabetes Mellitus Patients During the Covid-19 Pandemic - a Randomized Clinical Trial." *Primary Care Diabetes* 16, no. 6 (2022/12/01/ 2022): 745-52. https://doi.org/https://doi.org/10.1016/j.pcd.2022.09.011
+[^4]: Borges do Nascimento IJ, Pizarro AB, Almeida JM, Azzopardi-Muscat N, Gonçalves MA, Björklund M, Novillo-Ortiz D. Infodemics and health misinformation: a systematic review of reviews. Bull World Health Organ. 2022 Sep 1;100(9):544-561. doi: 10.2471/BLT.21.287654.
+
+##### 4B: Personal Connection
+
+My experience with a commercial smartwatch points a challenge in digital health: the gap between consumer-grade data and clinical reliability. The device, which advertised sleep, heart rate, and blood oxygen tracking, consistently misidentified my sleep. It usually recorded me as asleep when I was lying awake late at night or early in the morning. It also registered my awake time incorrectly, often marking it from the moment I touched the screen rather than when I actually woke up. This reflects a common limitation of devices not relying on the clinical “gold standard” of diagnosis, which uses EEG and EMG signals.
+
+This inaccuracy quickly eroded my trust in the device's output, a crucial barrier to the adoption of digital health tools. However, a subtle benefit might be that the device prompted me to pay more attention to my sleep habits. If wearables developers can further guide users to make manual corrections and emphasize the personalization of the algorithm, it would help bridge the accuracy gap and transform these devices into more genuine health partners.
+
+##### 4C: Meta-Reflection
+
+I don't have a lot of experience with telehealth and telemedicine, because in my home country it is convenient and popular for most people to see a doctor in person. Therefore, a challenging part for me is to understand more about the telehealth system and how people are using it. This made it difficult to fully grasp the concerns of users -- such as issues with trust, security, and convenience -- and then to form a truly genuine point of view. It reinforced for me that researchers in this field must have plenty of real-world experience to effectively address the needs of the people they hope to help.
+
+#### Exercise 5: Discover data
+
