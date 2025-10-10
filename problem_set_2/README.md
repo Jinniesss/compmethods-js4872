@@ -289,7 +289,7 @@ if __name__ == "__main__":
 
 Result:
 
-![algorithm_performance_plot](algorithm_performance_plot.png)
+![algorithm_performance_plot](figures/algorithm_performance_plot.png)
 
 The time complexity of the parallel method is relatively lower as the dataset size increases. 
 
@@ -543,3 +543,28 @@ I don't have a lot of experience with telehealth and telemedicine, because in my
 
 #### Exercise 5: Discover data
 
+- What is the data about? (1 point)
+
+  EEG signals during competitive decision-making in Rock-Paper-Scissors. https://openneuro.org/datasets/ds006761/versions/1.0.0
+
+  64 channel EEG was recorded from 62 participants, grouped into 31 pairs, while each pair played 480 games total (in 1 hour). Each game consisted of three phases: decision (2 sec), response (2 sec), and feedback (1 sec).
+
+- Where did you find it? (1 point)
+
+  openneuro.org
+
+  A free and open platform for validating and sharing BIDS-compliant MRI, PET, MEG, EEG, and iEEG data.
+
+- What license was specified? (1 point)
+
+  CC0
+
+- Why do you think it is interesting? (1 points)
+
+  It uses a simple game Rock-Paper-Scissors to study complex brain functions. It's interesting to explore how our brains handle competition and social prediction.
+
+- Give an example of two questions you could explore with this data. (1 point)
+
+  How do EEG patterns during feedback phase differ among win, loss, and draw?
+
+  How does brain activity change over the course of the 480 games? 
