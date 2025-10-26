@@ -258,3 +258,110 @@ Describe what happens as gets smaller and smaller (**3 points)**.
 Offer a hypothesis as to why you see the results that you see. **(4 points)**
 
 + Due to the limited floating-point precision, $f(h+3)$ becomes very close to $f(3)$ and the difference between them cannot be stored accurately. This inaccurate difference is then divided by a tiny $h$, which magnifies the error. 
+
+#### Exercise 4: Health and disease. (25 points)
+
+Write a Python function that uses the Explicit Euler method to plot
+
++ ```python
+  def dS(beta, S, I, N):
+      return -beta * S * I / N
+  def dI(beta, S, I, N, gamma):
+      return beta * S * I / N - gamma * I
+  def dR(gamma, I):
+      return gamma * I
+  
+  def simulate_sir(S0, I0, R0, beta, gamma, N, T_max):
+      S, I, R = S0, I0, R0
+      S_list, I_list, R_list = [S], [I], [R]
+      for t in range(T_max):
+          dS_dt = dS(beta, S, I, N)
+          dI_dt = dI(beta, S, I, N, gamma)
+          dR_dt = dR(gamma, I)
+  
+          S += dS_dt
+          I += dI_dt
+          R += dR_dt
+  
+          S_list.append(S)
+          I_list.append(I)
+          R_list.append(R)
+  
+      return S_list, I_list, R_list
+    
+  def plot_sir(I_list, T_max, filename):
+      plt.plot(range(T_max + 1), I_list, label='Infected')
+      plt.xlabel('Time')
+      plt.ylabel('Population')
+      plt.legend()
+      plt.savefig(filename)
+  
+  if __name__ == "__main__":
+      N = 137000
+      I0 = 1
+      R0 = 0
+      S0 = N - I0 - R0
+      beta = 2
+      gamma = 1
+      T_max = 100
+  
+      S_list, I_list, R_list = simulate_sir(S0, I0, R0, beta, gamma, N, T_max)
+      plot_sir(I_list, T_max, 'problem_set_3/sir_simulation_1.png')
+  ```
+
+![sir_simulation_1](sir_simulation_1.png)
+
+Plot the time course of the number of infected individuals until that number drops below 1 (at which point, we'll assume the disease has run its course). (**5 points**)
+
++ Updated `simulate_sir`:
+
+  ```python
+  def simulate_sir(S0, I0, R0, beta, gamma, N, T_max, auto_stop=False):
+      ...
+      for t in range(T_max):
+  				...
+  				if auto_stop and I < 1:
+              T_max = t + 1
+              break
+      return S_list, I_list, R_list, T_max
+  ```
+
++ Result
+
+  ![sir_simulation_2](sir_simulation_2.png)
+
+  
+
+For those parameter values, when does the number of infected people peak? (**2 points**) How many people are infected at the peak? (**3 points**).
+
++ Updated `simulate_sir`:
+
+  ```python
+  def simulate_sir(S0, I0, R0, beta, gamma, N, T_max, auto_stop=False):
+      ...
+      I_peak = I0
+      I_peak_time = 0
+      for t in range(T_max):
+        	...
+          if I > I_peak:
+              I_peak = I
+              I_peak_time = t + 1
+      print(f"Peak Infected: {I_peak} at time {I_peak_time}")
+      ...
+  ```
+
++ Result
+
+  ```
+  Peak Infected: 26533.15263086103 at time 16
+  ```
+
+Vary these two variables over "nearby" values, and plot on a heat map how the time of the peak of the infection depends on these two variables. (**5 points**). Do the same for the number of individuals infected at peak. (**5 points**)
+
++ Heatmap of peak times![peak_time_heatmap](peak_time_heatmap.png)
+
++ Heatmap of peak number of infected individuals 
+
+  ![peak_value_heatmap](peak_value_heatmap.png)
+
+#### Exercise 5
