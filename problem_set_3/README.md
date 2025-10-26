@@ -224,3 +224,37 @@ Comment on the separation or lack thereof, and any take-aways from that. (**5 po
 + The scatter plots for PC0 vs. PC1 and PC0 vs. PC2 show a clear, obvious separation between the two groups. In contrast, the PC1 vs. PC2 plot shows significant overlap. Therefore, PC0 alone probably accounts for the majority of the variance.
 + The `cancer` papers are more widely distributed, possibily because cancer is a more more heterogeneous and diverse research domain.
 + The overlap papers are more closely with the Alzheimer's group.
+
+#### Exercise 3: Computer math vs calculus (15 points)
+
+Plot on a log-log graph the difference:
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+f = lambda x: x**3
+x0 = 3
+true_derivative = 3 * x0**2
+h_values = np.logspace(-10, 0, num=1000)
+numerical_approx = (f(x0 + h_values) - f(x0)) / h_values
+difference = np.abs(numerical_approx - true_derivative)
+
+plt.figure(figsize=(10, 6))
+plt.loglog(h_values, difference)
+plt.xlabel("h (step size)")
+plt.ylabel("Absolute Value of the Difference")
+plt.title("Derivative Approximation Error")
+plt.grid(True, which="both", linestyle='--', linewidth=0.5)
+plt.savefig("problem_set_3/derivative_error.png")
+```
+
+![derivative_error](derivative_error.png)
+
+Describe what happens as gets smaller and smaller (**3 points)**. 
+
++ When h is smaller than $10^{-7}$, the line becomes noisy and starts to go back up. 
+
+Offer a hypothesis as to why you see the results that you see. **(4 points)**
+
++ Due to the limited floating-point precision, $f(h+3)$ becomes very close to $f(3)$ and the difference between them cannot be stored accurately. This inaccurate difference is then divided by a tiny $h$, which magnifies the error. 
