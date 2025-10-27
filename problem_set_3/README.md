@@ -360,8 +360,103 @@ Vary these two variables over "nearby" values, and plot on a heat map how the ti
 
 + Heatmap of peak times![peak_time_heatmap](peak_time_heatmap.png)
 
-+ Heatmap of peak number of infected individuals 
++ Heatmap of peak numbers of infected individuals 
 
   ![peak_value_heatmap](peak_value_heatmap.png)
 
 #### Exercise 5
+
+Dataset
+
++ An annual, nationwide survey of the U.S. population that provides detailed data on substance use, mental health disorders, treatment, and co-occurring conditions.
+
+Permission of dataset usage
+
++ According to the "2023 National Survey on Drug Use and Health Public Use File Data Users' Guide", the dataset is in the public domain. https://www.samhsa.gov/data/sites/default/files/reports/rpt56198/2023-nsduh-puf-data-users-guide.pdf
+
+  > **Public Domain Notice** 
+  >
+  > This publication is in the public domain and may be reproduced or copied without permission from SAMHSA. Citation of the source is appreciated. However, this publication may not be reproduced or distributed for a fee without the specific, written authorization of the Office of Communications, SAMHSA, HHS.
+
+Present a representative set of figures that gives insight into the data. Comment on the insights gained. (**4 points**)
+
+- The NSDUH data provides a comprehensive set of variables, including detailed respondent demographics, substance use history, and mental health status. Critically, it also contains key derived indicators for conditions such as Any Mental Illness and Drug Use Disorder.
+
+  I started by looking into these two conditions:
+
+  ![AMI_UD_0](../project/figure/AMI_UD_0.png)
+
+  ![AMI_UD_1](../project/figure/AMI_UD_1.png)
+
+  A final analysis weight has been calculated for each respondent and given in the dataset. Results of weighted population after dropping NaN values:
+
+  ![AMI_UD_0_weighted](../project/figure/AMI_UD_0_weighted.png)
+
+  ![AMI_UD_1_weighted](../project/figure/AMI_UD_1_weighted.png)
+
+- Insights: 
+
+  The proportions of respondents with drug use disorder and mental illness appear plausible, and confirm a significantly higher probability of mental illness within the population that has a drug use disorder. In later analysis, I can take a closer look at the influence of specific factors, such as drug type, drug use frequency, on specific mental health conditions. 
+
+Identify any data cleaning needs (this includes checking for missing data) and write code to perform them. If the data does not need to be cleaned, explain how you reached this conclusion. (**4** **points**)
+
++ Previous plots show that there are some NaN values in 'Any Mental Illness' column, which is because this variable only measures "Any Mental Illness" in adults, and all respondents aged under 18 have a NaN value for this variable. All other values used here are valid. Therefore, we can ignore all the respondents under 18 for the analysis by `dropna`. 
+
+  ```python
+  plot_df = plot_df.dropna(
+      subset=['UD5ILLANY', 'AMIPY', 'ANALWT2_C']
+  )
+  ```
+
++ The raw dataset requires preprocessing to be usable for analysis. As loaded, all values are strings, and the categorical variables use non-semantic codes (e.g., `'1'`, `'0'`).
+
+  ```python
+  plot_df['ANALWT2_C'] = pd.to_numeric(plot_df['ANALWT2_C'], errors='coerce')
+  plot_df['Drug Use Disorder'] = plot_df['UD5ILLANY'].map({
+      '1': 'Yes (Has Drug Use Disorder)',
+      '0': 'No (No Drug Use Disorder)'
+  })
+  plot_df['Any Mental Illness'] = plot_df['AMIPY'].map({
+      '1': 'Yes (Has Any Mental Illness)',
+      '0': 'No (No Any Mental Illness)'
+  })
+  ```
+
++ For some columns, there are multiple possible categories. They should be recoded into a clean, binary format (like 1 for 'Yes' and 0 for 'No') and a single indicator for missing data (including 'don't know', 'refused', and 'blank'). 
+
+  ```
+  # e.g. 
+  # 1 = Yes 
+  # 2 = No 
+  # 4 = No LOGICALLY ASSIGNED
+  # 11 = Yes (see note) 
+  # 85 = BAD DATA Logically assigned
+  # 91 = NEVER USED COCAINE (COCEVER=2) FOR CRKEVER
+  # 94 = DON'T KNOW 
+  # 97 = REFUSED
+  # 98 = BLANK (NO ANSWER)
+  ```
+
+  Example implementation:
+
+  ```python
+  recode_map = {
+      # "Yes"
+      1: 1,
+      11: 1,
+      
+      # "No"
+      2: 0,
+      4: 0,
+      91: 0,
+      
+      # "Missing"
+      85: np.nan,
+      94: np.nan,
+      97: np.nan,
+      98: np.nan
+  }
+  df['CRKEVER_clean'] = df['CRKEVER'].replace(recode_map)
+  ```
+
+  
