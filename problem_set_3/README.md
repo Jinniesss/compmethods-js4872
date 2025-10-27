@@ -251,7 +251,7 @@ plt.savefig("problem_set_3/derivative_error.png")
 
 ![derivative_error](derivative_error.png)
 
-Describe what happens as gets smaller and smaller (**3 points)**. 
+Describe what happens as h gets smaller and smaller (**3 points)**. 
 
 + When h is smaller than $10^{-7}$, the line becomes noisy and starts to go back up. 
 
@@ -459,4 +459,350 @@ Identify any data cleaning needs (this includes checking for missing data) and w
   df['CRKEVER_clean'] = df['CRKEVER'].replace(recode_map)
   ```
 
-  
+
+### Code appendix
+
+ [ex1.py](ex1.py) 
+
+```python
+import requests
+import json
+import os
+import sys
+import xml.dom.minidom as m
+import xml.etree.ElementTree as ET
+
+def get_pubmed_id_lists(term):
+    r = requests.get(
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+        f"esearch.fcgi?db=pubmed&term={term}&retmode=xml&retmax=1000"
+    )
+    doc = m.parseString(r.text)
+    id_lists = doc.getElementsByTagName("Id")
+    id_list = [id_node.childNodes[0].wholeText for id_node in id_lists]
+    return id_list
+
+def get_pubmed_metadata(query, id_list):
+    output_filename = f"problem_set_3/metadata_{query}.json"
+    # if os.path.exists(output_filename) and query != 'test':
+    #     return
+    id_list_str = ",".join(id_list)
+    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+    parameters = {
+        "db": "pubmed",
+        "id": id_list_str,
+        "retmode": "xml"
+    }
+    r = requests.post(url, data=parameters)
+
+    root = ET.fromstring(r.text)
+    metadata_dict = {}
+
+    for article in root.findall(".//PubmedArticle"):
+        pmid_element = article.find(".//PMID")
+        pmid = pmid_element.text
+
+        title_element = article.find(".//ArticleTitle")
+        title_text = ""
+        if title_element is not None:
+            title_text = ET.tostring(title_element, method="text", encoding="unicode").strip()
+
+        # abstract_element = article.find(".//AbstractText")
+        # abstract_text = ""
+        # if abstract_element is not None:
+        #     abstract_text = ET.tostring(abstract_element, method="text", encoding="unicode").strip()
+            
+        # 1d. Handle Structured Abstracts
+        abstract_parent = article.find(".//Abstract")
+        abstract_text = ""
+        
+        if abstract_parent is not None:
+            parts = []
+            for part in abstract_parent.findall(".//AbstractText"):
+                part_text = ET.tostring(part, method="text", encoding="unicode").strip()
+                if 'Label' in part.attrib:
+                    parts.append(f"{part.attrib['Label']}: {part_text}")
+                else:
+                    parts.append(part_text)
+            
+            abstract_text = " ".join(parts)
+            
+        metadata_dict[pmid] = {
+            "ArticleTitle": title_text,
+            "AbstractText": abstract_text,
+            "query": query 
+        }
+
+    with open(output_filename, "w") as f:
+        json.dump(metadata_dict, f, indent=4)
+    print(f"Metadata for {query} saved to {output_filename}") 
+    return metadata_dict
+
+if __name__ == "__main__":
+    # 1a. Retrieve PubMed id_lists for Alzheimer’s and Cancer Papers
+    terms = ['Alzheimers+AND+2024[pdat]', 'cancer+AND+2024[pdat]']
+    id_lists = {}
+    for term in terms:
+        id_lists[term.split('+')[0]] = get_pubmed_id_lists(term)
+    
+    id_lists['test'] = ['20966393']
+    # 1b. Retrieve Metadata for the Papers
+    for query, id_list in id_lists.items():
+        get_pubmed_metadata(query, id_list)
+
+    # 1c. Analyze Overlap Between the Two Paper Sets
+    overlap = set(id_lists['Alzheimers']).intersection(set(id_lists['cancer']))
+    print(f"Overlap between Alzheimer's and Cancer papers: {len(overlap)}")
+    
+    # Print the titles of the overlapped papers
+    for pmid in overlap:
+        with open("problem_set_3/metadata_Alzheimers.json", "r") as f:
+            alz_metadata = json.load(f)
+        title = alz_metadata[pmid]["ArticleTitle"]
+        print(f"PMID: {pmid}, Title: {title}")
+```
+
+ [ex2.ipynb](ex2.ipynb) 
+
+```python
+import tqdm
+from transformers import AutoTokenizer, AutoModel
+import json
+
+# load model and tokenizer
+tokenizer = AutoTokenizer.from_pretrained('allenai/specter')
+model = AutoModel.from_pretrained('allenai/specter')
+
+def get_abstract(paper):
+    return paper['AbstractText']
+
+json_files = ['metadata_Alzheimers.json', 'metadata_cancer.json']
+papers = {}
+for file in json_files:
+    with open(file, 'r', encoding='utf-8') as f:
+        cur_papers = json.load(f)
+        papers.update(cur_papers)
+
+embeddings = {}
+for pmid, paper in tqdm.tqdm(papers.items()):
+    data = [paper["ArticleTitle"] + tokenizer.sep_token + get_abstract(paper)]
+    inputs = tokenizer(
+        data, padding=True, truncation=True, return_tensors="pt", max_length=512
+    )
+    result = model(**inputs)
+    # take the first token in the batch as the embedding
+    embeddings[pmid] = result.last_hidden_state[:, 0, :].detach().numpy()[0]
+
+# turn our dictionary into a list
+embeddings = [embeddings[pmid] for pmid in papers.keys()]
+
+from sklearn import decomposition
+import pandas as pd
+
+pca = decomposition.PCA(n_components=3)
+embeddings_pca = pd.DataFrame(
+    pca.fit_transform(embeddings),
+    columns=['PC0', 'PC1', 'PC2']
+)
+# embeddings_pca["query"] = [paper["query"] for paper in papers.values()]
+embeddings_pca_query = []
+for id, paper in papers.items():
+    if id in ['40949928', '40326981', '40800467', '40395755']:
+        embeddings_pca_query.append('Overlap')
+    else:
+        embeddings_pca_query.append(paper["query"])
+embeddings_pca['query'] = embeddings_pca_query
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_style("whitegrid")
+
+fig, axes = plt.subplots(1, 3, figsize=(21, 6))
+fig.suptitle('PCA of SPECTER Embeddings', fontsize=16)
+
+# --- Plot 1: PC0 vs PC1 ---
+sns.scatterplot(
+    data=embeddings_pca, 
+    x='PC0', 
+    y='PC1', 
+    hue='query',
+    ax=axes[0],
+    s=15,
+    alpha=0.7
+)
+axes[0].set_title('PC0 vs PC1', fontsize=14)
+
+# --- Plot 2: PC0 vs PC2 ---
+sns.scatterplot(
+    data=embeddings_pca, 
+    x='PC0', 
+    y='PC2', 
+    hue='query', 
+    ax=axes[1],
+    s=15, 
+    alpha=0.7
+)
+axes[1].set_title('PC0 vs PC2', fontsize=14)
+
+# --- Plot 3: PC1 vs PC2 ---
+sns.scatterplot(
+    data=embeddings_pca, 
+    x='PC1', 
+    y='PC2', 
+    hue='query', 
+    ax=axes[2],
+    s=15, 
+    alpha=0.7
+)
+axes[2].set_title('PC1 vs PC2', fontsize=14)
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.savefig("pca_plots_2d.png", dpi=150)
+plt.show()
+```
+
+ [ex3.py](ex3.py) 
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+f = lambda x: x**3
+x0 = 3
+true_derivative = 3 * x0**2
+h_values = np.logspace(-10, 0, num=1000)
+numerical_approx = (f(x0 + h_values) - f(x0)) / h_values
+difference = np.abs(numerical_approx - true_derivative)
+
+plt.figure(figsize=(10, 6))
+plt.loglog(h_values, difference)
+plt.xlabel("h (step size)")
+plt.ylabel("Absolute Value of the Difference")
+plt.title("Derivative Approximation Error")
+plt.grid(True, which="both", linestyle='--', linewidth=0.5)
+plt.savefig("problem_set_3/derivative_error.png")
+```
+
+ [ex4.py](ex4.py) 
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+def dS(beta, S, I, N):
+    return -beta * S * I / N
+def dI(beta, S, I, N, gamma):
+    return beta * S * I / N - gamma * I
+def dR(gamma, I):
+    return gamma * I
+
+def simulate_sir(S0, I0, R0, beta, gamma, N, T_max, auto_stop=False):
+    S, I, R = S0, I0, R0
+    S_list, I_list, R_list = [S], [I], [R]
+    I_peak = I0
+    I_peak_time = 0
+    if auto_stop:
+        T_max = 100000000
+    for t in range(T_max):
+        dS_dt = dS(beta, S, I, N)
+        dI_dt = dI(beta, S, I, N, gamma)
+        dR_dt = dR(gamma, I)
+
+        S += dS_dt
+        I += dI_dt
+        R += dR_dt
+
+        S_list.append(S)
+        I_list.append(I)
+        R_list.append(R)
+        if I > I_peak:
+            I_peak = I
+            I_peak_time = t + 1
+        if auto_stop and I < 1:
+            T_max = t + 1
+            break
+    print(f"Peak Infected: {I_peak} at time {I_peak_time}")
+    return S_list, I_list, R_list, T_max, I_peak, I_peak_time
+
+def plot_sir(I_list, T_max, filename):
+    plt.figure()
+    plt.plot(range(T_max + 1), I_list, label='Infected')
+    plt.xlabel('Time')
+    plt.ylabel('Population')
+    plt.legend()
+    plt.savefig(filename)
+    plt.close()
+
+def plot_heatmap(data_grid, x_values, y_values, title, x_label, y_label, cbar_label, filename):
+    plt.figure(figsize=(10, 8))
+    extent = [x_values.min(), x_values.max(), y_values.min(), y_values.max()]
+    im = plt.imshow(data_grid, aspect='auto', origin='lower', 
+                    extent=extent, cmap='viridis')
+    
+    plt.colorbar(im, label=cbar_label)
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.savefig(filename)
+
+if __name__ == "__main__":
+    N = 137000
+    I0 = 1
+    R0 = 0
+    S0 = N - I0 - R0
+    beta = 2
+    gamma = 1
+    T_max = 100
+
+    S_list, I_list, R_list, _, _, _ = simulate_sir(S0, I0, R0, beta, gamma, N, T_max)
+    plot_sir(I_list, T_max, 'problem_set_3/sir_simulation_1.png')
+
+    S_list, I_list, R_list, T_max, _, _ = simulate_sir(S0, I0, R0, beta, gamma, N, T_max, auto_stop=True)
+    plot_sir(I_list, T_max, 'problem_set_3/sir_simulation_2.png')
+
+    # Heatmap generation
+    betas = np.linspace(1.0, 3.0, 50)
+    gammas = np.linspace(0.5, 1.5, 50)
+    peak_times_grid = np.zeros((len(gammas), len(betas)))
+    peak_values_grid = np.zeros((len(gammas), len(betas)))
+    heatmap_T_max = 1000
+
+    for i, g in enumerate(gammas):
+        for j, b in enumerate(betas):
+            _, _, _, _, I_peak, I_peak_time = simulate_sir(
+                S0, I0, R0, 
+                beta=b, 
+                gamma=g, 
+                N=N, 
+                T_max=heatmap_T_max, 
+                auto_stop=True
+            )
+            
+            peak_times_grid[i, j] = I_peak_time
+            peak_values_grid[i, j] = I_peak
+
+    # Plot peak infection heatmap
+    plot_heatmap(
+        data_grid=peak_times_grid,
+        x_values=betas,
+        y_values=gammas,
+        title='Time of Peak Infection vs. Beta and Gamma',
+        x_label='Infection Rate (beta)',
+        y_label='Recovery Rate (gamma)',
+        cbar_label='Time',
+        filename='problem_set_3/peak_time_heatmap.png'
+    )
+    # Plot peak infection value heatmap
+    plot_heatmap(
+        data_grid=peak_values_grid,
+        x_values=betas,
+        y_values=gammas,
+        title='Peak Number of Infected Individuals vs. Beta and Gamma',
+        x_label='Infection Rate (beta)',
+        y_label='Recovery Rate (gamma)',
+        cbar_label='Peak Infected Population',
+        filename='problem_set_3/peak_value_heatmap.png'
+    )
+```
+

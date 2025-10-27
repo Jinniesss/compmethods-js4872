@@ -93,4 +93,3 @@ if __name__ == "__main__":
             alz_metadata = json.load(f)
         title = alz_metadata[pmid]["ArticleTitle"]
         print(f"PMID: {pmid}, Title: {title}")
-    
