@@ -391,3 +391,50 @@ Provide a brief interpretation of what the confusion matrix results mean. (**4 p
 
 ### Exercise 4: EEG Clustering (20 points)
 
+Standardize all the columns to mean 0 and standard deviation 1 to make them directly comparable. **(2 points)**
+
++ ```python
+  data = pd.read_csv("eeg-eye-state.csv")
+  data = data.drop(columns=["eyeDetection"])
+  
+  for col in data.columns:
+      mean = data[col].mean()
+      std = data[col].std()
+      data[col] = (data[col] - mean) / std
+  ```
+
+Default PCA result
+
++ ![ex4_pca1](assets/ex4_pca1.png)
+
+PCA result after zooming in
+
++ ![ex4_pca2](assets/ex4_pca2.png)
+
+Clustering result
+
++ ![ex4_pca3](assets/ex4_pca3-3691846.png)
+
+You'll notice in the image above k=7 but we only see 6 clusters. Why is that? **(2 points)**
+
++ Another cluster is hidden by others, as they have overlapped projections onto the 2-dimension plane.
+
+We said in class that kmeans naturally splits data into clusters that are convex and non-overlapping, but here the clusters appear to overlap and be non-convex. In the figure, three of the centers appear to be in the brown region and none in the blue zone. Explain what's happening. **(2 points)**
+
++ The k-means is done in 14-dimension space, where the clusters are all convex and non-overlapping. For visualization, the clusters are projected onto a 2d plane, making them visually overlapping and non-convex in the plot. 
+
+Is this a representative view of the clusters? Does your understanding change if the points are plotted smaller? **(2 points)**
+
++ smaller points:
+
+  ![ex4_pca4](assets/ex4_pca4.png)
+
++ If plotted in smaller points, we can see more information on the blue cluster, which is mostly hidden in the original plot. Every 2D plot of high dimensional data is giving up some details. We can't tell the true distance between e.g. the blue and the orange cluster in this plot. However, we have to reduce data to 2D/3D to understand as human. 
+
+Repeat the k-means clustering several times. Describe the differences you see between different runs. **(2 points)**
+
++ <img src="assets/ex4_pca3-3692255.png" alt="ex4_pca3" style="zoom:33%;" /> <img src="assets/ex4_pca3-3692338.png" alt="ex4_pca3" style="zoom:33%;" />
++ In different runs, the clusters may be different. Like the orange/blue cluster in the left plot versus the pink one in the right plot.
+
+
+
