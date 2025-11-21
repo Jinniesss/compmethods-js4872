@@ -436,5 +436,26 @@ Repeat the k-means clustering several times. Describe the differences you see be
 + <img src="assets/ex4_pca3-3692255.png" alt="ex4_pca3" style="zoom:33%;" /> <img src="assets/ex4_pca3-3692338.png" alt="ex4_pca3" style="zoom:33%;" />
 + In different runs, the clusters may be different. Like the orange/blue cluster in the left plot versus the pink one in the right plot.
 
+### Exercise 5. Python and the Web (20 points)
 
+I have watched the whole video on Python and the Web. 
 
+Who presented the lecture? (**2 points**)
+
++ Prof. Robert McDougal
+
+What framework was demonstrated for building web servers? (**2 points**)
+
++ Flask
+
+How does the approach of the framework differ from "classical" servers that simply provide static web content? (**2 points**)
+
++ We can do calculations with user inputs in frameworks like Flask.
+
+Briefly explain how you might use the "Developer tools" to debug JavaScript issues in your web pages. (**2 points**) 
+
++ Use the console panel to check for logging and error reporting. Use the sources panel to  inspect the value of variables.
+
+Explain briefly how the app.route decorator is used to implement a RESTful API. (**2 points**)
+
++ The app.route decorator implements a RESTful API by mapping a specific URL path and the associated HTTP method (e.g. GET) to a dedicated Python function.
