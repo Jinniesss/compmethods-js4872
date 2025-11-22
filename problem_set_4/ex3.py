@@ -60,7 +60,7 @@ class QuadTree:
         return (self.xlo <= x < self.xhi) and (self.ylo <= y < self.yhi)
     
     def insert(self, point):
-        """Inserts a Point object into the tree, recursively splitting the node."""
+        # Inserts a Point into the tree, recursively splitting the node
         if not self.contains(point.x, point.y):
             return False 
 

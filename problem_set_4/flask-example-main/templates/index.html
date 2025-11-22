@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Substance Proportions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+            <div>
+                <h1>Substance use proportions (NSDUH 2023)</h1>
+                <p class="lead">Choose a substance to show the proportion of drug-use conditions according to the 2023
+                    National
+                    Survey on Drug Use.</p>
+            </div>
+        </div>
+
+        <form action="/analyze" method="POST">
+            <label for="usertext">Enter substance name</label>
+            <input type="text" id="usertext" name="usertext" placeholder="e.g. Cigarette, Marijuana, Alcohol, Cocaine">
+            <small style="color:var(--muted);">Type the substance name exactly (case-sensitive) used by the
+                form.</small>
+
+            <div style="margin-top:16px">
+                <input type="submit" value="Analyze">
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
