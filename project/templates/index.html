@@ -1,0 +1,85 @@
+{%
+extends "base.html"
+%}
+
+{%
+block content
+%}
+{# PCA interactive plot with kingdom selection #}
+<h3>PCA result of codon usage</h3>
+<form id="kingdom-form" action="{{ url_for('index') }}" method="get">
+    <div>
+        <strong>Show kingdoms:</strong><br />
+        {% for k in kingdoms %}
+        <label style="margin-right:8px;">
+            <input type="checkbox" name="kingdom" value="{{ k }}" {% if k in selected %}checked{% endif %}> {{ k }}
+        </label>
+        {% endfor %}
+    </div>
+    <div style="margin-top:12px; display:flex; justify-content:center;">
+        <div id="pca-plot-container" style="width:900px; max-width:95vw; margin:0 auto;">
+            {% if pca2_plot_html %}
+            {{ pca2_plot_html | safe }}
+            {% else %}
+            <p>PCA plot not available.</p>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+<p style="margin-top:12px;">
+    <a href="{{ url_for('knn') }}">Go to kNN prediction page</a>
+</p>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('kingdom-form');
+        if (!form) return;
+
+        // Find the Plotly graph div inside the container
+        const plotContainer = document.getElementById('pca-plot-container');
+        if (!plotContainer) return;
+        const plotDiv = plotContainer.querySelector('.plotly-graph-div');
+        if (!plotDiv) return;
+
+        // Prevent the form from submitting when checkboxes change (we'll update client-side)
+        form.addEventListener('submit', function (ev) {
+            // allow manual submit if needed (e.g., pressing Enter) — but typically we skip
+            ev.preventDefault();
+        });
+
+        const checkboxes = Array.from(form.querySelectorAll('input[type=checkbox][name=kingdom]'));
+        if (checkboxes.length === 0) return;
+
+        function updateTraceVisibility() {
+            // gather selected kingdoms
+            const selected = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
+
+            // for each trace in the plot, toggle visibility based on trace.name
+            const gd = plotDiv;
+            if (!gd || !gd.data) return;
+
+            gd.data.forEach((trace, idx) => {
+                const traceName = trace.name;
+                const shouldBeVisible = selected.includes(traceName);
+                // Use Plotly.restyle to change visibility for this trace index
+                try {
+                    Plotly.restyle(gd, { 'visible': shouldBeVisible }, [idx]);
+                } catch (err) {
+                    // fallback: set attribute and redraw
+                    trace.visible = shouldBeVisible;
+                }
+            });
+        }
+
+        // Attach listeners
+        checkboxes.forEach(cb => cb.addEventListener('change', updateTraceVisibility));
+
+        // Initial sync (in case server rendered a subset)
+        updateTraceVisibility();
+    });
+</script>
+
+{%
+endblock
+%}

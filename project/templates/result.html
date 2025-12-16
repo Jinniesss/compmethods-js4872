@@ -1,0 +1,22 @@
+{%
+extends "base.html"
+%}
+
+{%
+block content
+%}
+<h2>Results (k={{ k }}, PCA n={{ pca_n }})</h2>
+<p><strong>Accuracy:</strong> {{ accuracy }} &nbsp; <strong>Balanced accuracy:</strong> {{ balanced_accuracy }}</p>
+<p><strong>5-fold CV balanced accuracy (est.):</strong> {{ cv_bal_mean }} ± {{ cv_bal_std }}</p>
+
+<h3>Classification report</h3>
+<pre>{{ report }}</pre>
+
+<h3>Confusion matrix (normalized)</h3>
+<img src="data:image/png;base64,{{ cm_img }}" alt="confusion matrix" />
+
+<p><a href="{{ url_for('knn') }}">Run another</a> · <a href="{{ url_for('index') }}">Back to Homepage</a></p>
+
+{%
+endblock
+%}

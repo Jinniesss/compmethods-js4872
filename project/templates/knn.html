@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Prediction with kNN (and PCA)</h2>
+<p>Choose the number of PCA components and the k for kNN, then run the prediction.</p>
+<form action="{{ url_for('run') }}" method="post">
+    <label for="k">k (n_neighbors):</label>
+    <input type="number" id="k" name="k" value="{{ defaults.k }}" min="1" step="1" max="10000">
+    <br />
+    <label for="pca_n">PCA n_components (Range: 2-64):</label>
+    <input type="number" id="pca_n" name="pca_n" value="{{ defaults.pca_n }}" min="2" max="64" step="1">
+    <br />
+    <button type="submit">Run</button>
+</form>
+
+<p style="margin-top:12px;"><a href="{{ url_for('index') }}">Back to Homepage</a></p>
+
+{% endblock %}
